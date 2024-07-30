@@ -1,0 +1,40 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ci-pipeline
+  namespace: cicd-tekton
+spec:
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: compile
+      taskRef:
+        name: compile
+      params:
+        - name: repo-url
+          value: https://github.com/ashutoshsahoo/spring-boot-kubernetes.git
+        - name: revision
+          value: main
+      workspaces:
+        - name: shared-workspace
+          workspace: shared-workspace
+    - name: build
+      taskRef:
+        name: build
+      params:
+        - name: image-name
+          value: touseef10/spring-boot-kubernetes:7.2.0
+      workspaces:
+        - name: shared-workspace
+          workspace: shared-workspace
+      runAfter:
+        - compile
+    - name: deploy
+      taskRef:
+        name: deploy
+      workspaces:
+        - name: shared-workspace
+          workspace: shared-workspace
+      runAfter:
+        - build
+

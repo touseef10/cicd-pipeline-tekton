@@ -1,0 +1,37 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: compile
+  namespace: cicd-tekton
+spec:
+  workspaces:
+    - name: shared-workspace
+  params:
+    - name: repo-url
+      type: string
+      description: The git repository URL to clone
+      default: "https://github.com/ashutoshsahoo/spring-boot-kubernetes.git"
+    - name: revision
+      type: string
+      description: The git revision to checkout
+      default: "main"
+  steps:
+    - name: compile
+      image: maven:3.8.6-openjdk-18
+      script: |
+        #!/usr/bin/env bash
+        set -ex
+        echo "Cloning repository from $(params.repo-url)"
+        if [ -d "source" ]; then
+          echo "Removing existing 'source' directory"
+          rm -rf source
+        fi
+        git clone $(params.repo-url) source
+        cd source
+        echo "Checking out revision $(params.revision)"
+        git checkout $(params.revision)
+        echo "Running Maven clean package"
+        mvn clean package
+      workingDir: /workspace/shared-workspace
+
+

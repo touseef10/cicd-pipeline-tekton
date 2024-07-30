@@ -1,0 +1,45 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy
+  namespace: cicd-tekton
+spec:
+  workspaces:
+    - name: shared-workspace
+  steps:
+    - name: list-root-dir
+      image: bitnami/kubectl:latest
+      script: |
+        #!/usr/bin/env bash
+        echo "Listing contents of the root directory in the shared workspace:"
+        ls -lR $(workspaces.shared-workspace.path)
+    - name: check-deploy-dir
+      image: bitnami/kubectl:latest
+      script: |
+        #!/usr/bin/env bash
+        echo "Checking if the deploy directory exists:"
+        if [ -d "$(workspaces.shared-workspace.path)/source/deploy" ]; then
+          echo "Deploy directory exists."
+          ls -l $(workspaces.shared-workspace.path)/source/deploy
+        else
+          echo "Error: Deploy directory does not exist."
+          exit 1
+        fi
+    - name: check-deployment-file
+      image: bitnami/kubectl:latest
+      script: |
+        #!/usr/bin/env bash
+        echo "Checking if the kubernetes.yml file exists in the deploy directory:"
+        if [ -f "$(workspaces.shared-workspace.path)/source/deploy/kubernetes.yml" ]; then
+          echo "kubernetes.yml file exists."
+        else
+          echo "Error: kubernetes.yml file does not exist."
+          exit 1
+        fi
+    - name: deploy
+      image: bitnami/kubectl:latest
+      script: |
+        #!/usr/bin/env bash
+        kubectl apply -f $(workspaces.shared-workspace.path)/source/deploy/kubernetes.yml
+      workingDir: $(workspaces.shared-workspace.path)
+

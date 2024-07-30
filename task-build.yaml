@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build
+  namespace: cicd-tekton
+spec:
+  workspaces:
+    - name: shared-workspace
+  params:
+    - name: image-name
+      type: string
+      description: The name of the image to build
+  steps:
+    - name: build
+      image: docker:20.10.7-dind
+      script: |
+        #!/usr/bin/env sh
+        docker login -u touseef10 -p Sad123@@#
+        docker build -f deploy/Dockerfile --build-arg VERSION=7.2.0 -t touseef10/spring-boot-kubernetes:7.2.0 .
+        docker push touseef10/spring-boot-kubernetes:7.2.0
+      workingDir: /workspace/shared-workspace
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
